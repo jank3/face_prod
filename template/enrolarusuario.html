@@ -1,0 +1,276 @@
+<html>
+<head>   
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> 
+
+  <title>Api Kycface Cycle</title>
+
+  <!-- Bootstrap CSS CDN -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <!-- Our Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename = 'style.css') }}">
+
+
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <!-- Popper.JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+  <!-- Font Awesome JS -->
+  <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
+  <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
+
+
+  <script type="application/javascript">
+    $(document).ready(function () {
+     window.sessionStorage.setItem('tenantid', '103042019');
+     window.sessionStorage.setItem('tenantkey', 'sf3ai8BRsHUllijXmkWDCheXGgdr9cab');
+
+
+     fetch('https://kycface.mooo.com/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: 'test',
+        password: 'test',
+      }),
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+        'tenantid': window.sessionStorage.getItem('tenantid'),
+        'tenantkey': window.sessionStorage.getItem('tenantkey')
+      }
+    }).then(response => response.json())
+     .then(function(data){
+
+      window.sessionStorage.setItem('token', data.access_token);             
+    })
+
+ 
+     var form = $('#enrolaGrupo');
+
+     form.submit(function(event){
+
+      var group = $('#selgroupFull').val(); 
+      var user = $('#selnameFull').val();
+      var usuario ="test";
+      var password ="test";
+
+      if ( $.trim(group) != '' && $.trim(user) != '') {
+
+        $.ajax({
+            type: "POST",
+            url: "https://kycface.mooo.com/kycfaceid/v1/group/adduser",
+            headers: {"Authorization": 'Bearer ' + window.sessionStorage.getItem('token'),
+                  'tenantid': window.sessionStorage.getItem('tenantid'),
+                  'tenantkey': window.sessionStorage.getItem('tenantkey') },
+            data: {groupId: group,
+                   userId: user},            
+            success: function(msg) {  
+              if(msg.result == true)
+                  {
+                   alert("User enrolled in Group");
+                   searchGroupUser()
+                 }                                 
+            },
+           error: function() {
+            
+          }
+        });
+
+      }
+                               
+        event.preventDefault();
+
+      });
+
+     $('#sidebarCollapse').on('click', function () {
+      $('#sidebar').toggleClass('active');
+    });
+
+     $.ajax({
+      type: "POST",
+      url: "https://kycface.mooo.com/kycfaceid/v1/user/list",
+      headers: {"Authorization": 'Bearer ' + window.sessionStorage.getItem('token'),
+            'tenantid': window.sessionStorage.getItem('tenantid'),
+            'tenantkey': window.sessionStorage.getItem('tenantkey') },
+      data: "{}",
+      contentType: "application/json; charset=utf-8",
+      crossDomain: true,
+      dataType: 'json',
+      success: function(msg) {
+       var listItems = '<option selected="selected" value="0">- Select -</option>';
+
+       for (var i = 0; i < msg.length; i++) {
+         listItems += "<option value='" + msg[i].userId + "'>" + msg[i].namefull + "</option>";
+       }
+
+       $("#selnameFull").html(listItems);
+
+     },
+     error: function() {
+      alert("Do not charge users");
+    }
+  });
+
+     $.ajax({
+      type: "POST",
+      url: "https://kycface.mooo.com/kycfaceid/v1/group/list",
+      headers: {"Authorization": 'Bearer ' +  window.sessionStorage.getItem('token'),
+            'tenantid': window.sessionStorage.getItem('tenantid'),
+            'tenantkey': window.sessionStorage.getItem('tenantkey')},
+      data: "{}",
+      contentType: "application/json; charset=utf-8",
+      crossDomain: true,
+      dataType: 'json',
+      success: function(msg) {
+       var listItems = '<option selected="selected" value="0">- Select -</option>';
+
+       for (var i = 0; i < msg.result.groups.length; i++) {
+         listItems += "<option value='" + msg.result.groups[i].groupId + "'>" + msg.result.groups[i].groupName + "</option>";
+       }
+
+       $("#selgroupFull").html(listItems);
+
+     },
+     error: function() {
+      alert("Do not charge groups");
+    }
+  });
+
+     $("#selnameFull").change(function() {
+      searchGroupUser()
+    });
+   });
+
+    function searchGroupUser() {
+      var id = $('#selnameFull').val();    
+
+      fetch('http://kycface.mooo.com/kycfaceid/v1/group/listuser?userId=' + id, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ' +  window.sessionStorage.getItem('token'),
+            'tenantid': window.sessionStorage.getItem('tenantid'),
+            'tenantkey': window.sessionStorage.getItem('tenantkey')
+        }
+      }).then(response => response.json())
+      .then(function(data){                      
+       if(data.result.length>0)
+       {
+        drawTable(data.result)
+      }
+    });  
+    }                                             
+
+    function drawTable(data) {
+     for (var i = 0; i < data.length; i++) {
+      drawRow(data[i]);
+    }
+  }
+
+  function drawRow(rowData) {            
+    var row = $("<tr />")
+            $("#userGroup").append(row); //this will append tr element to table... keep its reference for a while since we will add cels into it
+            row.append($("<td>" + rowData.groupId + "</td>"));
+            row.append($("<td>" + rowData.groupName + "</td>"));
+            row.append($("<td>" + rowData.sizeLimit + "</td>"));
+          }
+
+
+        </script>   
+ </head>
+
+      <body tcap-name="main">
+        <div class="wrapper">
+          <!-- Sidebar -->
+          <nav id="sidebar">
+            <div class="sidebar-header">
+              <h3>Api Kycface Cycle</h3>
+            </div>
+            <ul class="list-unstyled components">
+             <p>Menu</p>  
+             <li>
+              <a href="/">Home</a>
+            </li>           
+            <li>
+              <a href="/kycface/creargrupo">Create Group</a>
+          </li>           
+          <li>
+              <a href="/kycface/crearusuario">Create User</a>
+          </li>
+          <li>
+              <a href="/kycface/enrolarusuario">Enroll User to Group</a>
+          </li>
+          <li>
+              <a href="/kycface/anadircara">Add Face to User</a>
+          </li>
+          <li>
+            <a href="/kycface/anadircarasin">Add Face to User</a>
+          </li>
+          <li>
+              <a href="/kycface/detectarrostro">Recognize Face</a>
+          </li>
+          <li>
+            <a href="/kycface/detectarrostrosin">Recognize Face Sin</a>
+          </li>
+          <li>
+              <a href="/kycface/stream">Stream Video</a>
+          </li>
+          </ul>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">     
+         <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+
+                <button type="button" id="sidebarCollapse" class="btn btn-info">
+                    <i class="fas fa-align-left"></i>
+                    <span>Menu</span>
+                </button>
+    
+            </div>   
+          <h3>Enroll User to Group</h3>  
+        </nav>           
+
+        <div id="Formualrio" class="card" style="width: 18rem;">       
+          <div class="card-body" >
+           <form id="enrolaGrupo">
+             <div class="form-group">
+              <label for="selecioneusuario1">Select User</label>
+              <select id="selnameFull">
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="selecionegrupo1">Select Group</label>
+              <select id="selgroupFull">
+              </select>
+            </div>                                      
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
+        </div>
+      </div>
+      <div id="Formualrio2" class="card" style="width: 18rem;">
+        <div class="card-body" >
+         <table id="userGroup">
+          <tr>
+            <th>Id</th>
+            <th>Group name</th>
+            <th>Size</th>
+          </tr>
+
+        </table>
+      </div>
+
+    </div>
+  </div>  
+</div>       
+
+
+</body>
+</html>
